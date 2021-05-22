@@ -2,6 +2,7 @@ import sys
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QMovie
 
+size_xy = [200, 400]
 class Sticker(QtWidgets.QMainWindow):
     def __init__(self, img_path, xy, size=1.0, on_top=False):
         super(Sticker, self).__init__()
@@ -18,31 +19,23 @@ class Sticker(QtWidgets.QMainWindow):
         self.on_top = on_top
         self.localPos = None
 
-        self.setupUi()
+        self.setupUi(img_path)
         self.show()
 
-    # 마우스 놓았을 때
-    '''
-    def mouseReleaseEvent(self, a0) -> None:
-        if self.to_xy_diff == [0, 0] and self.from_xy_diff == [0, 0]:
-            pass
-        else:
-            self.walk_diff(self.from_xy_diff, self.to_xy_diff, self.speed, restart=True)
-
-    # 마우스 눌렀을 때
-    def mousePressEvent(self, a0: QtGui.QMouseEvent):
-        self.localPos = a0.localPos()
-    '''
-
-    # 드래그 할 때
+    # 포인터 움직임 발생 시
     def mouseMoveEvent(self, event):
-        self.localPos = event.localPos()
-        self.xy = [(event.globalX() - self.localPos.x()), (event.globalY() - self.localPos.y())]
+        self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
+        self.xy = [event.globalX() - size_xy[0], event.globalY() - size_xy[1]]
+        #self.xy = [(event.globalX() - self.localPos.x()), (event.globalY() - self.localPos.y())]
         self.move(*self.xy)
+        print(self.xy)
 
-    def setupUi(self):
+
+    def setupUi(self, image):
         centralWidget = QtWidgets.QWidget(self)
         self.setCentralWidget(centralWidget)
+        centralWidget.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
+        self.setMouseTracking(True)
 
         flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint if self.on_top else QtCore.Qt.FramelessWindowHint)
         self.setWindowFlags(flags)
@@ -50,23 +43,17 @@ class Sticker(QtWidgets.QMainWindow):
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
 
         label = QtWidgets.QLabel(centralWidget)
-        movie = QMovie(self.img_path)
-        label.setMovie(movie)
-        movie.start()
-        movie.stop()
+        pixmap = QtGui.QPixmap(image)
+        label.setPixmap(pixmap)
+        label.resize(pixmap.width(), pixmap.height())
 
-        w = int(movie.frameRect().size().width() * self.size)
-        h = int(movie.frameRect().size().height() * self.size)
-        movie.setScaledSize(QtCore.QSize(w, h))
-        movie.start()
-
-        self.setGeometry(self.xy[0], self.xy[1], w, h)
-        self.setMouseTracking(True)
+        self.setGeometry(self.xy[0], self.xy[1], pixmap.width(), pixmap.height())
+        self.show()
 
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
 
-    s = Sticker('left.gif', xy=[0, 0], on_top=True)
+    s = Sticker('study.jpeg', xy=[0, 0], on_top=True)
 
     sys.exit(app.exec_())
