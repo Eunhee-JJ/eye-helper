@@ -1,6 +1,8 @@
 import pyautogui as pag
 import cv2
 
+### 그 링크 코드랑 거의 똑같고 좌표 넣는 부분이랑 cv2.INTER_LINEAR 만 수정함
+
 # 캡쳐할 영역의 왼쪽 상단 모서리와 오른쪽 하단 모서리의 좌표값을 미리구해둔다.
 
 position = pag.position() #여기다가 HYE좌표 넣어주자
