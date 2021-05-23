@@ -5,9 +5,13 @@ import pyautogui as pag
 import threading
 import multiprocessing as mp
 from multiprocessing import Process, Queue
+import zoom_zoom
+import Sticker
 
 size_xy = [140, 90]
+pointer_xy = zoom_zoom.left_top
 img = 'capture.png'
+
 
 # 좌표 부근 스크린샷 후 확대
 def capture(xy):
@@ -17,6 +21,7 @@ def capture(xy):
     img_source = cv2.imread(img)
     img_result = cv2.resize(img_source, None, fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
     cv2.imwrite(img, img_result)
+
 
 # 프레임 없는 윈도우 창
 class Sticker(QtWidgets.QMainWindow):
@@ -43,12 +48,12 @@ class Sticker(QtWidgets.QMainWindow):
 
     # 좌표값 이용하는 방법으로 변경한 예시
     def stickerMove(self, p_xy):
-        self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents) # 마우스 이벤트 무시
+        self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)  # 마우스 이벤트 무시
         super().setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
         self.xy = [p_xy[0] - size_xy[0], p_xy[1] - size_xy[1]]
         self.move(*self.xy)
 
-    #def mouseDoubleClickEvent(self, a0: QtGui.QMouseEvent):
+    # def mouseDoubleClickEvent(self, a0: QtGui.QMouseEvent):
     def mouseReleaseEvent(self, a0: QtGui.QMouseEvent) -> None:
         QtWidgets.qApp.quit()
 
@@ -56,9 +61,10 @@ class Sticker(QtWidgets.QMainWindow):
         centralWidget = QtWidgets.QWidget(self)
         self.setCentralWidget(centralWidget)
         centralWidget.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
-        #self.setMouseTracking(True)
+        # self.setMouseTracking(True)
 
-        flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint if self.on_top else QtCore.Qt.FramelessWindowHint)
+        flags = QtCore.Qt.WindowFlags(
+            QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint if self.on_top else QtCore.Qt.FramelessWindowHint)
         self.setWindowFlags(flags)
         self.setAttribute(QtCore.Qt.WA_NoSystemBackground, True)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
@@ -67,27 +73,16 @@ class Sticker(QtWidgets.QMainWindow):
         pixmap = QtGui.QPixmap(image)
         label.setPixmap(pixmap)
         label.resize(pixmap.width(), pixmap.height())
-
-        self.setGeometry(self.xy[0], self.xy[1], pixmap.width(), pixmap.height())
-        self.show()
+        while True:
+            p = mp.Process(name="capture", target=capture, args=(pointer_xy,))
+            p.start()
+            p.join()
+            QtWidgets.QApplication.processEvents()
+            self.stickerMove(self.xy)
+            self.setGeometry(self.xy[0], self.xy[1], pixmap.width(), pixmap.height())
+            self.show()
 
 if __name__ == '__main__':
-    pointer_xy = [500, 500]  # 여기다가 HYE좌표 넣어주자
-
-    app = QtWidgets.QApplication(sys.argv)
-    s = Sticker(img, xy=[pointer_xy[0] - size_xy[0], pointer_xy[1] - size_xy[1]], on_top=True)
-    while True:
-        pointer_xy[0] = (pointer_xy[0] + 1) % 1400
-        pointer_xy[1] = (pointer_xy[1] + 1) % 1400
-        print(pointer_xy)
-        
-        t = mp.Process(name="capture", target=capture, args=(pointer_xy, ))
-        t.start()
-        t.join()
-
-        s.stickerMove(pointer_xy)
-        app.exec_()
-        s = Sticker(img, xy=[pointer_xy[0] - size_xy[0], pointer_xy[1] - size_xy[1]], on_top=True)
-
-
-
+    app = Sticker.QtWidgets.QApplication(sys.argv)
+    s = Sticker(Sticker.img, xy=[pointer_xy[0] - size_xy[0], pointer_xy[1] - size_xy[1]], on_top=True)
+    sys.exit(app.exec_())
